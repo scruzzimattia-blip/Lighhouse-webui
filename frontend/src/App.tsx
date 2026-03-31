@@ -24,7 +24,6 @@ const App: React.FC = () => {
   const [containers, setContainers] = useState<DockerContainer[]>([]);
   const [logs, setLogs] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [lighthouseActive, setLighthouseActive] = useState(false);
 
   const fetchContainers = async () => {
