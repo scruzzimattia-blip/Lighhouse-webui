@@ -3,8 +3,12 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-COPY . .
-RUN if [ ! -f index.html ]; then echo "CRITICAL ERROR: index.html not found in /app" && ls -la && exit 1; fi
+COPY index.html ./
+COPY src/ ./src/
+COPY public/ ./public/
+COPY vite.config.ts .
+COPY tsconfig*.json .
+RUN ls -la
 RUN ls -R src
 RUN npm run build
 
