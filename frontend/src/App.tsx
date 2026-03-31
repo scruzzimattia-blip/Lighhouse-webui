@@ -8,7 +8,9 @@ import {
   CheckCircle2, 
   Activity, 
   ShieldCheck, 
-  Server
+  Server,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 interface DockerContainer {
@@ -25,6 +27,20 @@ const App: React.FC = () => {
   const [logs, setLogs] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [lighthouseActive, setLighthouseActive] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  const theme = {
+    bg: isDarkMode ? '#0f172a' : '#f8f9fa',
+    surface: isDarkMode ? '#1e293b' : '#ffffff',
+    border: isDarkMode ? '#334155' : '#e5e7eb',
+    textPrimary: isDarkMode ? '#f8fafc' : '#1e293b',
+    textSecondary: isDarkMode ? '#94a3b8' : '#64748b',
+    accent: '#3b82f6',
+    success: '#10b981',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    cardShadow: isDarkMode ? '0 4px 6px -1px rgba(0, 0, 0, 0.2)' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+  };
 
   const fetchContainers = async () => {
     try {
@@ -69,9 +85,10 @@ const App: React.FC = () => {
     <div style={{ 
       padding: '40px', 
       fontFamily: '"Inter", -apple-system, sans-serif', 
-      backgroundColor: '#f8f9fa', 
+      backgroundColor: theme.bg, 
       minHeight: '100vh',
-      color: '#1a1d21'
+      color: theme.textPrimary,
+      transition: 'all 0.3s ease'
     }}>
       {/* Header */}
       <header style={{ 
@@ -79,33 +96,64 @@ const App: React.FC = () => {
         justifyContent: 'space-between', 
         alignItems: 'center', 
         marginBottom: '40px',
-        backgroundColor: 'white',
+        backgroundColor: theme.surface,
         padding: '20px 30px',
-        borderRadius: '16px',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)'
+        borderRadius: '20px',
+        border: `1px solid ${theme.border}`,
+        boxShadow: theme.cardShadow
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <ShieldCheck size={32} color="#007bff" /> Lighthouse Dashboard
-          </h1>
-          <p style={{ margin: '5px 0 0 0', color: '#6c757d', fontSize: '14px' }}>Automated Docker Update Monitor</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ 
+            backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff', 
+            padding: '10px', 
+            borderRadius: '12px' 
+          }}>
+            <ShieldCheck size={32} color={theme.accent} />
+          </div>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.025em' }}>
+              Lighthouse
+            </h1>
+            <p style={{ margin: '2px 0 0 0', color: theme.textSecondary, fontSize: '14px', fontWeight: 500 }}>
+              Automated Docker Updates
+            </p>
+          </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
             gap: '8px', 
             padding: '8px 16px', 
-            borderRadius: '20px',
-            backgroundColor: systemHealthy ? '#e6f4ea' : '#fce8e8',
-            color: systemHealthy ? '#1e7e34' : '#d93025',
+            borderRadius: '12px',
+            backgroundColor: systemHealthy ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            color: systemHealthy ? theme.success : theme.error,
             fontWeight: 600,
-            fontSize: '14px'
+            fontSize: '14px',
+            border: `1px solid ${systemHealthy ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
           }}>
             {systemHealthy ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-            {systemHealthy ? 'System Healthy' : 'Action Required'}
+            {systemHealthy ? 'SYSTEM HEALTHY' : 'ATTENTION REQUIRED'}
           </div>
+
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            style={{
+              padding: '10px',
+              borderRadius: '12px',
+              border: `1px solid ${theme.border}`,
+              backgroundColor: theme.surface,
+              color: theme.textPrimary,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+
           <button 
             onClick={() => { setLoading(true); fetchContainers(); fetchLogs(); }}
             style={{ 
@@ -114,12 +162,13 @@ const App: React.FC = () => {
               gap: '8px', 
               padding: '10px 20px', 
               borderRadius: '12px', 
-              border: '1px solid #dee2e6', 
-              backgroundColor: 'white', 
-              color: '#1a1d21', 
+              border: 'none', 
+              backgroundColor: theme.accent, 
+              color: 'white', 
               cursor: 'pointer',
-              fontWeight: 500,
-              transition: 'all 0.2s'
+              fontWeight: 600,
+              fontSize: '14px',
+              boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)'
             }}
           >
             <RefreshCw size={18} className={loading ? 'spin' : ''} /> Sync
@@ -127,75 +176,110 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+      {/* Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
         {[
-          { label: 'Watched Containers', value: stats.total, icon: <Container size={24} color="#007bff" />, color: '#e7f1ff' },
-          { label: 'Currently Running', value: stats.running, icon: <Activity size={24} color="#28a745" />, color: '#eafaf1' },
-          { label: 'Status Issues', value: stats.stopped, icon: <AlertCircle size={24} color="#dc3545" />, color: '#fef2f2' },
-          { label: 'Lighthouse Core', value: lighthouseActive ? 'Active' : 'Offline', icon: <Server size={24} color="#6f42c1" />, color: '#f3f0fd' },
+          { label: 'Watched', value: stats.total, icon: <Container size={22} />, color: theme.accent, bg: 'rgba(59, 130, 246, 0.1)' },
+          { label: 'Running', value: stats.running, icon: <Activity size={22} />, color: theme.success, bg: 'rgba(16, 185, 129, 0.1)' },
+          { label: 'Issues', value: stats.stopped, icon: <AlertCircle size={22} />, color: theme.error, bg: 'rgba(239, 68, 68, 0.1)' },
+          { label: 'Engine', value: lighthouseActive ? 'Active' : 'Offline', icon: <Server size={22} />, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
         ].map((stat, i) => (
           <div key={i} style={{ 
-            backgroundColor: 'white', 
+            backgroundColor: theme.surface, 
             padding: '24px', 
-            borderRadius: '16px', 
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+            borderRadius: '20px', 
+            border: `1px solid ${theme.border}`,
+            boxShadow: theme.cardShadow,
             display: 'flex',
-            flexDirection: 'column',
-            gap: '15px'
+            alignItems: 'center',
+            gap: '20px'
           }}>
-            <div style={{ width: '48px', height: '48px', backgroundColor: stat.color, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ 
+              width: '56px', 
+              height: '56px', 
+              backgroundColor: stat.bg, 
+              color: stat.color,
+              borderRadius: '16px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
               {stat.icon}
             </div>
             <div>
-              <div style={{ color: '#6c757d', fontSize: '14px', fontWeight: 500 }}>{stat.label}</div>
-              <div style={{ fontSize: '28px', fontWeight: 700, marginTop: '4px' }}>{stat.value}</div>
+              <div style={{ color: theme.textSecondary, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {stat.label}
+              </div>
+              <div style={{ fontSize: '28px', fontWeight: 800, marginTop: '2px', color: theme.textPrimary }}>
+                {stat.value}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px' }}>
-        {/* Container List */}
+        {/* Monitoring List */}
         <section>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            Active Monitoring
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Active Monitoring</h2>
+            <span style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: 500 }}>Live Feed</span>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {containers.length === 0 ? (
-              <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'white', borderRadius: '16px', border: '2px dashed #dee2e6' }}>
-                <p style={{ color: '#6c757d' }}>No containers marked with lighthouse labels.</p>
+              <div style={{ 
+                padding: '60px', 
+                textAlign: 'center', 
+                backgroundColor: theme.surface, 
+                borderRadius: '20px', 
+                border: `2px dashed ${theme.border}` 
+              }}>
+                <p style={{ color: theme.textSecondary, fontWeight: 500 }}>No containers detected with monitoring labels.</p>
               </div>
             ) : (
               containers.map(c => (
                 <div key={c.Id} style={{ 
-                  backgroundColor: 'white', 
+                  backgroundColor: theme.surface, 
                   padding: '20px', 
                   borderRadius: '16px', 
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  border: `1px solid ${theme.border}`,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
-                  border: '1px solid #f1f3f5'
+                  alignItems: 'center'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ 
-                      width: '10px', 
-                      height: '10px', 
+                      width: '12px', 
+                      height: '12px', 
                       borderRadius: '50%', 
-                      backgroundColor: c.State === 'running' ? '#28a745' : '#dc3545',
-                      boxShadow: c.State === 'running' ? '0 0 8px rgba(40,167,69,0.5)' : 'none'
+                      backgroundColor: c.State === 'running' ? theme.success : theme.error,
+                      boxShadow: c.State === 'running' ? `0 0 12px ${theme.success}66` : 'none'
                     }} />
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '16px' }}>{c.Names[0].replace('/', '')}</div>
-                      <div style={{ fontSize: '13px', color: '#6c757d', marginTop: '2px' }}>{c.Image}</div>
+                      <div style={{ fontWeight: 700, fontSize: '16px', color: theme.textPrimary }}>
+                        {c.Names[0].replace('/', '')}
+                      </div>
+                      <div style={{ fontSize: '13px', color: theme.textSecondary, marginTop: '2px', fontFamily: 'monospace' }}>
+                        {c.Image}
+                      </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 500, color: c.State === 'running' ? '#28a745' : '#dc3545' }}>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      fontWeight: 700, 
+                      color: c.State === 'running' ? theme.success : theme.error,
+                      backgroundColor: c.State === 'running' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      display: 'inline-block'
+                    }}>
                       {c.State.toUpperCase()}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#adb5bd', marginTop: '2px' }}>{c.Status}</div>
+                    <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '6px', fontWeight: 500 }}>
+                      {c.Status}
+                    </div>
                   </div>
                 </div>
               ))
@@ -203,32 +287,49 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* Logs */}
+        {/* Logs Console */}
         <section>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Terminal size={20} /> System Logs
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Terminal size={20} color={theme.accent} /> Engine Logs
+            </h2>
+          </div>
           <div style={{ 
-            backgroundColor: '#1a1d21', 
-            color: '#e9ecef', 
-            padding: '20px', 
-            borderRadius: '16px', 
-            height: '500px', 
+            backgroundColor: isDarkMode ? '#020617' : '#1e293b', 
+            color: '#cbd5e1', 
+            padding: '24px', 
+            borderRadius: '20px', 
+            height: '520px', 
             overflowY: 'auto',
-            fontFamily: '"JetBrains Mono", monospace',
+            fontFamily: '"JetBrains Mono", "Fira Code", monospace',
             whiteSpace: 'pre-wrap',
-            fontSize: '13px',
-            lineHeight: '1.6',
-            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+            fontSize: '12px',
+            lineHeight: '1.7',
+            border: `1px solid ${theme.border}`,
+            boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.3)'
           }}>
-            {logs || 'Waiting for log stream...'}
+            {logs ? (
+              logs.split('\n').map((line, i) => (
+                <div key={i} style={{ marginBottom: '4px' }}>
+                  <span style={{ color: theme.accent, marginRight: '8px' }}>›</span>
+                  {line}
+                </div>
+              ))
+            ) : (
+              <div style={{ color: theme.textSecondary, fontStyle: 'italic' }}>Initialising log stream...</div>
+            )}
           </div>
         </section>
       </div>
       
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap');
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${theme.border}; borderRadius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: ${theme.textSecondary}; }
       `}</style>
     </div>
   );
