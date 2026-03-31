@@ -3,7 +3,7 @@ services:
     build: .
     container_name: lighthouse-webui
     ports:
-      - "8085:8085"
+      - "8087:8085"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /home/mattia/Nextcloud2/Coding/Lighthouse/stats.json:/app/stats.json:ro
