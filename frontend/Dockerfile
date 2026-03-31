@@ -4,8 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-ARG CACHEBUST=1
-RUN ls -la
+RUN if [ ! -f index.html ]; then echo "CRITICAL ERROR: index.html not found in /app" && ls -la && exit 1; fi
 RUN npm run build
 
 # Production stage
