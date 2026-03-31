@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, Terminal, RefreshCw, AlertCircle } from 'lucide-react';
+import { 
+  Container, 
+  Terminal, 
+  RefreshCw, 
+  AlertCircle, 
+  CheckCircle2, 
+  Activity, 
+  ShieldCheck, 
+  Server
+} from 'lucide-react';
 
 interface DockerContainer {
   Id: string;
@@ -16,6 +25,7 @@ const App: React.FC = () => {
   const [logs, setLogs] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lighthouseActive, setLighthouseActive] = useState(false);
 
   const fetchContainers = async () => {
     try {
@@ -23,7 +33,7 @@ const App: React.FC = () => {
       setContainers(response.data);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch containers');
+      setError('Backend connection failed');
     } finally {
       setLoading(false);
     }
@@ -33,8 +43,9 @@ const App: React.FC = () => {
     try {
       const response = await axios.get('http://localhost:3001/api/lighthouse/logs');
       setLogs(response.data);
+      setLighthouseActive(true);
     } catch (err) {
-      console.error('Failed to fetch logs', err);
+      setLighthouseActive(false);
     }
   };
 
@@ -44,82 +55,183 @@ const App: React.FC = () => {
     const interval = setInterval(() => {
       fetchContainers();
       fetchLogs();
-    }, 10000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
+  const stats = {
+    total: containers.length,
+    running: containers.filter(c => c.State === 'running').length,
+    stopped: containers.filter(c => c.State !== 'running').length,
+  };
+
+  const systemHealthy = lighthouseActive && stats.stopped === 0;
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1 style={{ margin: 0 }}>Lighthouse WebUI</h1>
-        <button 
-          onClick={() => { setLoading(true); fetchContainers(); fetchLogs(); }}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 15px', borderRadius: '6px', border: 'none', backgroundColor: '#007bff', color: 'white', cursor: 'pointer' }}
-        >
-          <RefreshCw size={18} /> Refresh
-        </button>
+    <div style={{ 
+      padding: '40px', 
+      fontFamily: '"Inter", -apple-system, sans-serif', 
+      backgroundColor: '#f8f9fa', 
+      minHeight: '100vh',
+      color: '#1a1d21'
+    }}>
+      {/* Header */}
+      <header style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '40px',
+        backgroundColor: 'white',
+        padding: '20px 30px',
+        borderRadius: '16px',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)'
+      }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <ShieldCheck size={32} color="#007bff" /> Lighthouse Dashboard
+          </h1>
+          <p style={{ margin: '5px 0 0 0', color: '#6c757d', fontSize: '14px' }}>Automated Docker Update Monitor</p>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            padding: '8px 16px', 
+            borderRadius: '20px',
+            backgroundColor: systemHealthy ? '#e6f4ea' : '#fce8e8',
+            color: systemHealthy ? '#1e7e34' : '#d93025',
+            fontWeight: 600,
+            fontSize: '14px'
+          }}>
+            {systemHealthy ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            {systemHealthy ? 'System Healthy' : 'Action Required'}
+          </div>
+          <button 
+            onClick={() => { setLoading(true); fetchContainers(); fetchLogs(); }}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              padding: '10px 20px', 
+              borderRadius: '12px', 
+              border: '1px solid #dee2e6', 
+              backgroundColor: 'white', 
+              color: '#1a1d21', 
+              cursor: 'pointer',
+              fontWeight: 500,
+              transition: 'all 0.2s'
+            }}
+          >
+            <RefreshCw size={18} className={loading ? 'spin' : ''} /> Sync
+          </button>
+        </div>
       </header>
 
-      {error && (
-        <div style={{ backgroundColor: '#ffdede', color: '#a30000', padding: '15px', borderRadius: '6px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <AlertCircle size={20} /> {error}
-        </div>
-      )}
+      {/* Stats Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+        {[
+          { label: 'Watched Containers', value: stats.total, icon: <Container size={24} color="#007bff" />, color: '#e7f1ff' },
+          { label: 'Currently Running', value: stats.running, icon: <Activity size={24} color="#28a745" />, color: '#eafaf1' },
+          { label: 'Status Issues', value: stats.stopped, icon: <AlertCircle size={24} color="#dc3545" />, color: '#fef2f2' },
+          { label: 'Lighthouse Core', value: lighthouseActive ? 'Active' : 'Offline', icon: <Server size={24} color="#6f42c1" />, color: '#f3f0fd' },
+        ].map((stat, i) => (
+          <div key={i} style={{ 
+            backgroundColor: 'white', 
+            padding: '24px', 
+            borderRadius: '16px', 
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '15px'
+          }}>
+            <div style={{ width: '48px', height: '48px', backgroundColor: stat.color, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {stat.icon}
+            </div>
+            <div>
+              <div style={{ color: '#6c757d', fontSize: '14px', fontWeight: 500 }}>{stat.label}</div>
+              <div style={{ fontSize: '28px', fontWeight: 700, marginTop: '4px' }}>{stat.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px' }}>
+        {/* Container List */}
         <section>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Container size={24} /> Watched Containers
+          <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            Active Monitoring
           </h2>
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {containers.length === 0 ? (
-                <p>No containers found with label com.lighthouse.enable=true</p>
-              ) : (
-                containers.map(c => (
-                  <div key={c.Id} style={{ backgroundColor: 'white', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{c.Names[0].replace('/', '')}</div>
-                    <div style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>{c.Image}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ 
-                        padding: '4px 8px', 
-                        borderRadius: '4px', 
-                        fontSize: '0.8em', 
-                        backgroundColor: c.State === 'running' ? '#d4edda' : '#f8d7da',
-                        color: c.State === 'running' ? '#155724' : '#721c24'
-                      }}>
-                        {c.State}
-                      </span>
-                      <span style={{ fontSize: '0.8em', color: '#888' }}>{c.Status}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {containers.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'white', borderRadius: '16px', border: '2px dashed #dee2e6' }}>
+                <p style={{ color: '#6c757d' }}>No containers marked with lighthouse labels.</p>
+              </div>
+            ) : (
+              containers.map(c => (
+                <div key={c.Id} style={{ 
+                  backgroundColor: 'white', 
+                  padding: '20px', 
+                  borderRadius: '16px', 
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  border: '1px solid #f1f3f5'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ 
+                      width: '10px', 
+                      height: '10px', 
+                      borderRadius: '50%', 
+                      backgroundColor: c.State === 'running' ? '#28a745' : '#dc3545',
+                      boxShadow: c.State === 'running' ? '0 0 8px rgba(40,167,69,0.5)' : 'none'
+                    }} />
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '16px' }}>{c.Names[0].replace('/', '')}</div>
+                      <div style={{ fontSize: '13px', color: '#6c757d', marginTop: '2px' }}>{c.Image}</div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          )}
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 500, color: c.State === 'running' ? '#28a745' : '#dc3545' }}>
+                      {c.State.toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#adb5bd', marginTop: '2px' }}>{c.Status}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </section>
 
+        {/* Logs */}
         <section>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Terminal size={24} /> Lighthouse Logs
+          <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Terminal size={20} /> System Logs
           </h2>
           <div style={{ 
-            backgroundColor: '#2b2b2b', 
-            color: '#f0f0f0', 
-            padding: '15px', 
-            borderRadius: '8px', 
+            backgroundColor: '#1a1d21', 
+            color: '#e9ecef', 
+            padding: '20px', 
+            borderRadius: '16px', 
             height: '500px', 
             overflowY: 'auto',
-            fontFamily: 'monospace',
+            fontFamily: '"JetBrains Mono", monospace',
             whiteSpace: 'pre-wrap',
-            fontSize: '0.85em'
+            fontSize: '13px',
+            lineHeight: '1.6',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
           }}>
-            {logs || 'No logs available or Lighthouse container not found.'}
+            {logs || 'Waiting for log stream...'}
           </div>
         </section>
       </div>
+      
+      <style>{`
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };
