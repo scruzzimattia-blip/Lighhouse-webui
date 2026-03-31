@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: ./backend
+    container_name: lighthouse-webui-backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: lighthouse-webui-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: always
