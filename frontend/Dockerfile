@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+ARG CACHEBUST=1
 RUN ls -la
 RUN npm run build
 
