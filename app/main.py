@@ -4,25 +4,41 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import docker
 import os
+import json
 import traceback
 
 app = FastAPI()
 client = docker.from_env()
 templates = Jinja2Templates(directory="app/templates")
 
+STATS_FILE = "/app/stats.json"
+
 @app.get("/", response_class=HTMLResponse)
 async def read_item(request: Request):
     return templates.TemplateResponse(request, "index.html")
+
+def load_stats():
+    if os.path.exists(STATS_FILE):
+        try:
+            with open(STATS_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
 
 @app.get("/api/containers")
 async def get_containers():
     try:
         containers = client.containers.list(all=True, filters={"label": "com.lighthouse.enable=true"})
+        stats = load_stats()
         result = []
         for c in containers:
             image_tag = "unknown"
             if c.image.tags:
                 image_tag = c.image.tags[0]
+            
+            # Hole Stats fuer diesen Container
+            c_stats = stats.get(c.name, {"count": 0, "last_update": "never"})
             
             result.append({
                 "Id": c.id,
@@ -30,7 +46,9 @@ async def get_containers():
                 "Image": image_tag,
                 "State": c.status,
                 "Status": c.attrs.get('State', {}).get('Status', 'unknown') if 'State' in c.attrs else c.attrs.get('Status', 'unknown'),
-                "Labels": c.labels
+                "Labels": c.labels,
+                "UpdateCount": c_stats["count"],
+                "LastUpdate": c_stats["last_update"]
             })
         return result
     except Exception as e:
