@@ -31,9 +31,8 @@ const App: React.FC = () => {
     try {
       const response = await axios.get('http://localhost:3001/api/containers');
       setContainers(response.data);
-      setError(null);
     } catch (err) {
-      setError('Backend connection failed');
+      console.error('Backend connection failed', err);
     } finally {
       setLoading(false);
     }
