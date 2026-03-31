@@ -3,11 +3,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-COPY index.html ./
-COPY src/ ./src/
-COPY public/ ./public/
-COPY vite.config.ts .
-COPY tsconfig*.json .
+COPY . .
 RUN ls -la
 RUN ls -R src
 RUN npm run build
