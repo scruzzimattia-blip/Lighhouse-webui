@@ -12,7 +12,7 @@ services:
     build: ./frontend
     container_name: lighthouse-webui-frontend
     ports:
-      - "8081:80"
+      - "8085:80"
     depends_on:
       - backend
     restart: always
